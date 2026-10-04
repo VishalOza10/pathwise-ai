@@ -4,7 +4,9 @@ A student planning and academic support prototype with a daily focus panel, edit
 
 Repository: https://github.com/VishalOza10/pathwise-ai · Branch: `main`
 
-Live application: deployment pending verification. Do not treat the local URL or a successful build as proof of an AWS deployment.
+Live application: https://main.d3w3fisru88s9k.amplifyapp.com/ (AWS Amplify, us-east-1).
+
+Verified October 4, 2026: hosted page, student/advisor login, authorized academic reads, denied foreign records, study-plan persistence across a fresh sign-in, completion/undo/history, academic assistant, deep links, controlled 404, and logout. See `TESTING.md` for the evidence scope and remaining checks. All data is fictional.
 
 ## Planning workspace
 
@@ -29,6 +31,8 @@ For AWS, `npm run build` creates `.amplify-hosting` using the official Amplify d
 This small-cohort adapter is deliberately limited: one versioned cohort, compressed size <=300 KB, expanded size <=4 MB, 150 sessions, 32 tasks per plan, 20 activity entries per plan. Conflicting writes return 409 for refresh/retry. It is not a scalable multi-tenant student information system. A future real-user service should use per-entity durable records, institutional authentication, backups, and a reviewed retention policy.
 
 ## AWS Amplify setup and cost
+
+The current deployment uses the directly created on-demand `PathWiseDemoData` table (string partition key `pk`, TTL `expiresAt`) and `PathWiseAmplifyCompute` role attached to the `main` branch only. Its inline policy grants GetItem, PutItem, and UpdateItem on that one table. The trust policy restricts the Amplify app and account. The CloudFormation template below is an alternative for a fresh installation; do not create a duplicate stack for the existing deployment.
 
 1. Connect this new repository's `main` branch to a new Amplify app in `us-east-1`; retain the first application's resources.
 2. Use `amplify.yml`: Node 24, `npm ci --ignore-scripts`, tests, then `npm run build`; output `.amplify-hosting`. Platform must be **WEB_COMPUTE** for this Express adapter. The first build cannot serve authenticated data until storage and origin are configured.
