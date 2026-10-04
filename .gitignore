@@ -1,0 +1,15 @@
+node_modules/
+.env
+.env.*
+!.env.example
+data/
+*.sqlite*
+*.pem
+*.key
+*.log
+.security-work/
+AIML515*/
+Workshop*/
+*.zip
+.amplify-hosting/
+dist/
