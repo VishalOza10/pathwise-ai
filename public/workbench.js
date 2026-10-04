@@ -45,10 +45,17 @@ export async function mountPlanner(host,{api,studentId,confirmAction,toast,compa
   async function fetchHistory(){try{const r=await api(base+'/history');if(host.isConnected)history=r.history;}catch{history=[];}}
   async function commit(path,method,body,schema,id){
     return job(async()=>{
+      const previousPercent=plan?.tasks.length?plan.tasks.filter(t=>t.completed).length/plan.tasks.length*100:0;
+      const positions=new Map([...host.querySelectorAll('.wb-pane [data-card]')].map(el=>[el.dataset.card,el.getBoundingClientRect()]));
       const result=await api(base+path,{method,body:valid(schema,body)});if(!host.isConnected)return;
       if(result.confirmation)throw Error('Preview and accept the target change before saving.');
       plan=valid(schemas.plan,result.plan);changedId=id;notice=result.message||'Saved. Your progress, schedule, and next step are updated.';
-      closeDrawer();await fetchHistory();await transition(render);toast(notice);
+      closeDrawer();await fetchHistory();render();toast(notice);
+      if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+        const value=plan.tasks.length?plan.tasks.filter(t=>t.completed).length/plan.tasks.length*100:0;
+        host.querySelector('.ring-value')?.animate([{strokeDasharray:`${previousPercent} 100`},{strokeDasharray:`${value} 100`}],{duration:300,easing:'ease-out'});
+        host.querySelectorAll('.wb-pane [data-card]').forEach(el=>{const old=positions.get(el.dataset.card);if(old){const box=el.getBoundingClientRect();el.animate([{transform:`translate(${old.x-box.x}px,${old.y-box.y}px)`},{transform:'translate(0,0)'}],{duration:280,easing:'ease-out'});}});
+      }
       if(host.isConnected)(id?host.querySelector(`[data-toggle="${CSS.escape(id)}"]`):null)?.focus({preventScroll:true});
       if(host.isConnected&&!host.contains(document.activeElement))host.querySelector('[data-progress]')?.focus({preventScroll:true});
       window.dispatchEvent(new CustomEvent('pathwise:plan-updated',{detail:{studentId}}));

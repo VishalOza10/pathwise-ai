@@ -17,4 +17,6 @@ body{background:var(--cream);color:var(--ink)}h1{letter-spacing:-1.2px;font-size
 [data-theme=dark] :is(.eyebrow,.text-link,.back){color:var(--accent)}
 @media(max-width:600px){[data-theme=dark] .sidebar{inset:auto 0 0;width:100%;height:72px;padding:6px 7px max(6px,env(safe-area-inset-bottom));background:var(--surface)}[data-theme=dark] .topbar{height:58px;padding:0 17px}.nav a{overflow:visible}.wb-drawer .wb-task-grid{padding-bottom:5px}}
 .wb-processing{padding:12px;background:var(--soft);border-radius:8px;color:var(--accent);font-size:12px}
+.wb-next{view-transition-name:next-action}.wb-progress{view-transition-name:plan-progress}.wb-health{view-transition-name:plan-health}
+@media(min-width:601px) and (max-width:1150px){[data-theme=dark] .sidebar{width:178px;padding:24px 11px}[data-theme=dark] .nav-collapsed .sidebar{width:76px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
