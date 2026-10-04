@@ -69,3 +69,38 @@ test('cloud state round-trip retains plan, authorization relationships, constrai
     assert.throws(()=>restored.prepare("UPDATE alerts SET status='resolved' WHERE id=1").run());
   }finally{db.close();restored?.close();}
 });
+
+test('preview is read-only, authorized, strict, and acceptance rejects stale versions',async t=>{
+  const {request,login,db}=await fixture(t),student=await login(),base='/api/students/1/plan';
+  const plan=(await request(base,student,'POST',{version:0,preferences})).data.plan;
+  const before=db.prepare('SELECT count(*) n FROM plan_activity').get().n;
+  const preview=await request(base+'/preview/revise',student,'POST',{version:1,message:'I only have three hours per week'});
+  assert.equal(preview.status,200);assert.equal(preview.data.plan.preferences.hours,3);
+  assert.equal((await request(base,student)).data.plan.preferences.hours,5);
+  assert.equal(db.prepare('SELECT count(*) n FROM plan_activity').get().n,before);
+  assert.equal((await request('/api/students/2/plan/preview/revise',student,'POST',{version:1,message:'Make this easier'})).status,403);
+  assert.equal((await request(base+'/preview/tasks',student,'POST',{version:1,taskId:plan.tasks[0].id,changes:{grade:100}})).status,400);
+  await request(base+'/tasks',student,'PATCH',{version:1,taskId:plan.tasks[0].id,changes:{completed:true}});
+  assert.equal((await request(base+'/revise',student,'POST',{version:1,message:'I only have three hours per week',confirmed:true})).status,409);
+});
+
+test('rescheduling and reorder persist without altering official deadlines or dependencies',async t=>{
+  const {request,login,db}=await fixture(t),student=await login(),base='/api/students/1/plan';
+  let plan=(await request(base,student,'POST',{version:0,preferences})).data.plan;
+  const work=plan.tasks[0],date=new Date(Date.now()+7*86400000).toISOString().slice(0,10),deadline=work.deadline;
+  let r=await request(base+'/tasks',student,'PATCH',{version:1,taskId:work.id,changes:{notBefore:date}});
+  assert.equal(r.status,200);plan=r.data.plan;
+  const updated=plan.tasks.find(t=>t.id===work.id);assert.ok(updated.scheduled>=date);assert.equal(updated.deadline,deadline);
+  assert.equal(db.prepare('SELECT due_at FROM assignments WHERE id=?').get(work.assignmentId).due_at.slice(0,10),deadline);
+  assert.equal((await request(base+'/reorder',student,'POST',{version:2,taskIds:[work.id,work.id]})).status,400);
+  r=await request(base+'/reorder',student,'POST',{version:2,taskIds:plan.tasks.map(t=>t.id).reverse()});assert.equal(r.status,200);
+  plan=r.data.plan;for(const t of plan.tasks)for(const dep of t.dependsOn)assert.ok(plan.tasks.find(t=>t.id===dep).scheduled<=t.scheduled);
+  assert.equal((await request(base+'/tasks',student,'PATCH',{version:3,taskId:work.id,changes:{notBefore:'2020-01-01'}})).status,400);
+});
+
+test('daily work allocations conserve effort and remain inside planned capacity',()=>{
+  const db=createDatabase();try{const plan=generatePlan(db,1,{...preferences,hours:3});const days=new Map();
+    for(const t of plan.tasks){assert.ok(Math.abs(t.slots.reduce((n,s)=>n+s.minutes,0)-t.minutes)<.01);for(const s of t.slots){days.set(s.date,(days.get(s.date)||0)+s.minutes);assert.ok(![0,6].includes(new Date(s.date).getUTCDay()));}}
+    for(const n of days.values())assert.ok(n<=Math.floor(3*60*.85)/5+.01);
+  }finally{db.close();}
+});

@@ -12,7 +12,7 @@ Verified October 4, 2026: hosted page, student/advisor login, authorized academi
 
 Open **Study plan** to define an academic goal, hours per week, planning horizon, optional target date, pace, and constraints. A starting value of five hours/week is an editable assumption. Recorded incomplete assignments become work/review steps with estimated effort. Without assignment data the planner supplies clearly identified general study steps, never invented deadlines.
 
-The planner prioritizes high-priority work and earlier deadlines, with prerequisite work before review. It distributes effort over five weekdays in UTC and leaves 15% buffer in Balanced mode, 30% in Gentle mode, and no buffer in Focused mode. Tasks can span multiple study days; their date is estimated completion, not a single uninterrupted appointment. Work past an official deadline or the user's target is flagged with reasons and human follow-up. Constraints entered as notes are displayed but not automatically interpreted as calendar availability.
+The planner starts in deadline order and prioritizes high-priority work, with manual order within priorities and prerequisite work before review. It distributes effort over five weekdays in UTC and leaves 15% buffer in Balanced mode, 30% in Gentle mode, and no buffer in Focused mode. Tasks can span multiple study days; their date is estimated completion, not a single uninterrupted appointment. Work past an official deadline or the user's target is flagged with reasons and human follow-up. Constraints entered as notes are displayed but not automatically interpreted as calendar availability.
 
 Users can search, add, remove, rename, reprioritize, estimate, complete, and reopen study steps. Dependency checks prevent completing a blocked review step. Timeline checkpoint progress, the daily focus panel, next actions, and the authorized advisor's student summary derive from these same saved tasks. Study preparation is distinct from assignment submission and does not change grades. Academic completion is incorporated when the user selects **Refresh from progress**.
 
@@ -47,7 +47,7 @@ Official references: [Amplify deployment contract](https://docs.aws.amazon.com/a
 
 ## Verification of the planning upgrade
 
-`npm test` currently passes 32 automated tests, including authorization, schema validation, concurrency, task dependencies, AI ambiguity/injection handling, undo/audit consistency, planning target confirmation, capacity changes, missing data, cloud-state round-trip, and deployment configuration checks. `npm run build` requires a configured HTTPS origin and durable table name before it creates the Amplify bundle; AWS branch/app identifiers can supply the default origin. A successful build does not prove storage access or live health. Browser/deployment verification is tracked in `TESTING.md`.
+`npm test` currently passes 35 automated tests, including authorization, schema validation, concurrency, task dependencies, AI ambiguity/injection handling, undo/audit consistency, planning target confirmation, capacity changes, missing data, cloud-state round-trip, and deployment configuration checks. `npm run build` requires a configured HTTPS origin and durable table name before it creates the Amplify bundle; AWS branch/app identifiers can supply the default origin. A successful build does not prove storage access or live health. Browser/deployment verification is tracked in `TESTING.md`.
 
 **All accounts and academic records are fictional.** This is not an official university system. The assistant is a deterministic demo service, not a live LLM, and needs no API key. It helps with recorded courses, assignments, assessments, approved resources, and a small learning library.
 
@@ -231,3 +231,13 @@ See `test/guardrails.test.js` for the executable suite and `TESTING.md` for the 
 - `test/guardrails.test.js`: executable guardrail and failure tests.
 
 The synced project `sources/` directory is not used or modified.
+
+## Visual workspace redesign — October 4, 2026
+
+The dashboard is now an action workspace rather than a stack of summary cards. It includes a next-step panel, inspectable completion ring and plan health, a focus/task board, daily workload bars, selectable checkpoints, a goal map, task detail drawers, activity, and undo. Mobile uses a bottom navigation and full-width detail sheets. Courses have clickable recorded-assessment bars; assignments use a filtered board; advisors use filtered cohort cards. Resources connect approved references to study actions.
+
+`public/workbench.js` is the shared planning view for Today, My plan, and the assistant. Server data remains authoritative. Preview endpoints calculate authorized changes without updating the plan or audit history; accepting sends the original validated command and expected version, never an arbitrary client-authored plan. Task rescheduling changes a study start constraint, not official deadlines. Reorder buttons change order within a priority; dependency traversal takes precedence. No drag action is required.
+
+The scheduler returns actual estimated daily work allocations. Charts total those allocations instead of placing an entire multi-day task on its finish date. Existing saved plans remain readable; use Balance my week to preview and save refreshed allocations. The week view starts with the next scheduled work week. Settings and AI revisions show current/proposed capacity, finish estimates, and affected steps before acceptance. The assistant remains a bounded deterministic service with no paid model calls.
+
+Validation: 35 automated tests passed, including read-only previews, stale acceptance rejection, ownership, strict fields, preserved official deadlines, dependency-safe scheduling, daily capacity conservation, and the existing guardrails. Desktop and 390 × 844 browser checks covered generation, completion/next-action updates, preview cancel/accept, undo, goal checkpoints, invalid task titles, Escape dismissal, dark mode, course-chart inspection, assignment/cohort filters, assistant refusal, and advisor alert/history. A dark-mode mobile navigation width conflict found during review was corrected. Reduced-motion rules are implemented; full screen-reader/contrast certification is not claimed.

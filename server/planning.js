@@ -60,15 +60,19 @@ export function schedulePlan(plan,now=Date.now()){
   const pending=plan.tasks.filter(t=>!t.completed);
   const ordered=[],visited=new Set();
   function visit(task){if(visited.has(task.id))return;visited.add(task.id);for(const dep of task.dependsOn){const before=pending.find(t=>t.id===dep);if(before)visit(before);}ordered.push(task);}
-  [...pending].sort((a,b)=>({high:0,medium:1,low:2}[a.priority]-{high:0,medium:1,low:2}[b.priority])||(a.deadline||'9999').localeCompare(b.deadline||'9999')).forEach(visit);
+  // Array order is the user's order within each priority; prerequisites always precede dependents.
+  [...pending].sort((a,b)=>({high:0,medium:1,low:2}[a.priority]-{high:0,medium:1,low:2}[b.priority])).forEach(visit);
   plan.risks=[];plan.milestones=[];
   const horizon=p.target || iso(now+p.weeks*7*day);
   for(const task of ordered){
+    task.slots=[];
+    if(task.notBefore && Date.parse(task.notBefore)>cursor){cursor=Date.parse(task.notBefore);available=0;}
     let remaining=task.minutes;
     while(remaining>0){
       while([0,6].includes(new Date(cursor).getUTCDay()))cursor+=day;
       if(available===0)available=daily;
-      const consumed=Math.min(available,remaining);remaining-=consumed;available-=consumed;
+      const consumed=Math.min(available,remaining);remaining=Math.max(0,Math.round((remaining-consumed)*1000)/1000);available=Math.max(0,Math.round((available-consumed)*1000)/1000);
+      task.slots.push({date:iso(cursor),minutes:Math.round(consumed*1000)/1000});
       task.scheduled=iso(cursor);
       if(available<0.001){available=0;cursor+=day;}
     }
@@ -125,6 +129,7 @@ export function changeTask(plan,taskId,changes){
   const task=plan.tasks.find(t=>t.id===taskId);
   if(!task)throw new PlanError('This study step is unavailable.',404);
   if(changes.title)guardPlanningText(changes.title);
+  if(changes.notBefore && (changes.notBefore<iso(Date.now()) || Date.parse(changes.notBefore)>Date.now()+366*day))throw new PlanError('Choose a study start between today and one year from now.');
   if(changes.completed===true&&task.dependsOn.some(dep=>!plan.tasks.find(t=>t.id===dep)?.completed))throw new PlanError('Complete the prerequisite study step first.',409);
   if(changes.completed===false&&plan.tasks.some(t=>t.completed&&t.dependsOn.includes(task.id)))throw new PlanError('Reopen the dependent review step first.',409);
   Object.assign(task,changes);

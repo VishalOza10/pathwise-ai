@@ -71,3 +71,11 @@ After authorization, the isolated on-demand PathWiseDemoData table and PathWiseA
 
 Deployment 2 published commit `a47e9fa9d45851136449e0579266580bc5a6cb54`. At October 4, 2026, 4:28 PM EDT, 13 live verification groups passed: hosted home; unauthenticated API protection; student login; academic reads; foreign-student and advisor-API denial; durable plan generation; task completion and undo; activity history; saved plan after a fresh sign-in; academic assistant; advisor cohort and unassigned-record denial; protected deep link and controlled unknown route; logout. A separate browser sign-in displayed the live student dashboard and saved plan. Live fault injection, full mobile/keyboard review, and persistence across a later redeployment are not implied by these results.
 
+
+## Visual workspace redesign verification — October 4, 2026
+
+All 35 automated tests passed; the configured Amplify bundle built. New API regression tests prove preview requests do not mutate plans or audit rows, foreign-student previews fail, unexpected update fields fail, stale acceptance conflicts, start constraints and reorder persist without altering official deadlines, dependencies remain valid, and daily allocation totals conserve effort within capacity.
+
+Browser checks used a separate disposable database on localhost:3004, leaving saved local and cloud data intact. Passed: create/preview/accept a goal, complete a study step and see progress/next-action change, weekly workload details, goal/checkpoint drill-down, three-hour preview cancel with original hours retained, accept with activity recorded, undo restoring original capacity, empty-title rejection, Escape close, protected refresh, mobile bottom navigation/drawer, dark/light theme, clickable course assessments, assignment/cohort filters, assistant planning preview and injection refusal, advisor review and activity history. A mobile dark-theme sidebar-width conflict was found and fixed; the measured document width equaled the viewport width. No OS reduced-motion setting was changed; CSS support was inspected. Full screen-reader and exhaustive browser compatibility audits are not claimed.
+
+Historical sections above describe earlier revisions. The deployment report and its screenshots identify the deployed revision separately; local redesign screenshots are not evidence of cloud deployment.

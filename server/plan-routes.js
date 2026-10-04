@@ -28,6 +28,26 @@ export function registerPlanRoutes(app,{db,authorizeStudent,id,validate,limiter}
     if(result.plan.preferences.target!==plan.preferences.target&&!body.confirmed)return res.json({plan,confirmation:`Move your planning target to ${result.plan.preferences.target}? Official assignment deadlines will stay unchanged.`});
     res.json({message:result.message,plan:result.plan===plan?plan:savePlan(db,req.user.id,studentId,result.plan,body.version,result.message,'assistant')});
   }));
+  // Preview recomputes authorized data without writing. Acceptance revalidates the original command/version.
+  app.post(base+'/preview/revise',wrap((req,res)=>{
+    const {body,plan}=current(req,schemas.revise);const result=revisePlan(plan,body.message);
+    res.json({plan:result.plan,message:result.message});
+  }));
+  app.post(base+'/preview/tasks',wrap((req,res)=>{
+    const {body,plan}=current(req,schemas.edit);changeTask(plan,body.taskId,body.changes);
+    res.json({plan:schedulePlan(plan)});
+  }));
+  app.post(base+'/preview',wrap((req,res)=>{
+    const studentId=scope(req),body=validate(schemas.generate,req.body),previous=readPlan(db,req.user.id,studentId);
+    if((previous?.version||0)!==body.version)throw new PlanError('This plan changed. Refresh before editing it.',409);
+    res.json({plan:generatePlan(db,studentId,body.preferences,previous)});
+  }));
+  app.post(base+'/reorder',wrap((req,res)=>{
+    const {studentId,body,plan}=current(req,schemas.reorder);
+    if(body.taskIds.length!==plan.tasks.length || body.taskIds.some(id=>!plan.tasks.some(t=>t.id===id)))throw new PlanError('Include each current study step exactly once.');
+    plan.tasks=body.taskIds.map(id=>plan.tasks.find(t=>t.id===id));
+    res.json({plan:savePlan(db,req.user.id,studentId,schedulePlan(plan),body.version,'Study order updated')});
+  }));
   app.patch(base+'/tasks',wrap((req,res)=>{
     const {studentId,body,plan}=current(req,schemas.edit);changeTask(plan,body.taskId,body.changes);
     res.json({plan:savePlan(db,req.user.id,studentId,schedulePlan(plan),body.version,body.changes.completed===undefined?'Study step edited':body.changes.completed?'Study step completed':'Study step reopened')});
