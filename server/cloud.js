@@ -6,12 +6,10 @@ import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from '@
 import { createApp } from './app.js';
 import { createDatabase } from './database.js';
 import { encodeState, decodeState } from './cloud-state.js';
+import { cloudConfig } from './cloud-config.js';
 
 const config=existsSync(new URL('../cloud-config.json',import.meta.url))?JSON.parse(readFileSync(new URL('../cloud-config.json',import.meta.url),'utf8')):{};
-const origin=process.env.APP_ORIGIN||config.origin;
-const table=process.env.PATHWISE_TABLE||config.table;
-const region=process.env.AWS_REGION||config.region||'us-east-1';
-if(!origin?.startsWith('https://')||!table)throw new Error('Cloud origin and durable table configuration are required');
+const {origin,table,region}=cloudConfig(process.env,config);
 const parsed=new URL(origin);
 if(parsed.origin!==origin)throw new Error('Invalid cloud origin');
 const store=DynamoDBDocumentClient.from(new DynamoDBClient({region,maxAttempts:2}));

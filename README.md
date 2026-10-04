@@ -43,7 +43,7 @@ Official references: [Amplify deployment contract](https://docs.aws.amazon.com/a
 
 ## Verification of the planning upgrade
 
-`npm test` currently passes 29 automated tests, including authorization, schema validation, concurrency, task dependencies, AI ambiguity/injection handling, undo/audit consistency, planning target confirmation, capacity changes, missing data, and cloud-state round-trip. `npm run build` produces the Amplify bundle. These results do not verify a live AWS deployment. Browser/deployment verification is tracked in `TESTING.md`.
+`npm test` currently passes 32 automated tests, including authorization, schema validation, concurrency, task dependencies, AI ambiguity/injection handling, undo/audit consistency, planning target confirmation, capacity changes, missing data, cloud-state round-trip, and deployment configuration checks. `npm run build` requires a configured HTTPS origin and durable table name before it creates the Amplify bundle; AWS branch/app identifiers can supply the default origin. A successful build does not prove storage access or live health. Browser/deployment verification is tracked in `TESTING.md`.
 
 **All accounts and academic records are fictional.** This is not an official university system. The assistant is a deterministic demo service, not a live LLM, and needs no API key. It helps with recorded courses, assignments, assessments, approved resources, and a small learning library.
 

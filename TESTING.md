@@ -53,3 +53,19 @@ Browser checks on disposable in-memory copies exercised all six Alex completion 
 Fixed misleading blank-assistant Retry feedback by validating before submission; added inline invalid-field feedback. Added heading/filter/completion focus management, skip-to-main navigation, explicitly named/described confirmation dialogs, focus restoration and reduced-motion CSS. Enter, Escape, and main-region focus were checked through the browser. Reduced-motion CSS was inspected without changing the user's OS preference. Full screen-reader and contrast conformance testing remains outside this review.
 
 For repeatable video rehearsal, run `node scripts/rehearsal.mjs`. The normal copy uses `http://localhost:3002`; the AI-outage copy uses `http://127.0.0.1:3003`. Both use fresh in-memory databases and bind only to loopback. Stop the rehearsal process with Ctrl+C; it never resets or edits the saved database. Do not run a second rehearsal process while those ports are occupied.
+
+## Planning upgrade verification — October 4, 2026
+
+Automated: 29 tests passed after adding plan ownership, shared manual/AI action rules, dependency checks, stale-version rejection, audit and undo, adaptive scheduling, missing-data behavior, and cloud-state serialization. Amplify output built successfully. AWS SDK dependency audit reported zero known vulnerabilities at installation.
+
+Browser verified on localhost: student login; Study plan navigation; plan generation from current assignments; 1/6 progress after manual completion; dependent review became actionable; natural-language change to three hours/week preserved completed work and moved estimates; Undo restored five hours/week; refresh retained the saved plan. Dark mode and desktop visual layout inspected. The new public repository and its main commit were verified through GitHub.
+
+Pending: live Amplify deployment, DynamoDB conditional-write integration against AWS, deployed session/cookie behavior, production deep links, and full mobile/keyboard/reduced-motion checks. The in-app browser viewport override did not change its measured width; that attempt is not recorded as a passed mobile test.
+
+Screenshot evidence is local and is not committed with the source. Do not present local screenshots as AWS deployment evidence.
+# Hosted deployment verification on October 4 2026
+
+Amplify app `d3w3fisru88s9k`, main deployment 1, was marked Deployed after 2 minutes 30 seconds. Its build log passed 29 tests but warned that APP_ORIGIN and PATHWISE_TABLE were missing. Independent HTTPS requests to `/`, `/login`, and `/api/auth/session` returned HTTP 500. This is a failed live verification, not a working deployment. The AWS DynamoDB console showed zero tables in us-east-1.
+
+Durable storage remains required. After authorization, the isolated on-demand PathWiseDemoData table and PathWiseAmplifyCompute role were created. The role permits GetItem, PutItem, and UpdateItem on this table only; it is attached only to the main branch. TTL expiresAt applies to rate-limit records, not the cohort. Origin, table name, and region were configured in Amplify. Configuration validation now fails packaging before output is written when required settings are absent. Three focused regression tests pass. Redeployment and live application verification are pending; this paragraph is not a claim that the live app works.
+

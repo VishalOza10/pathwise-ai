@@ -10,6 +10,7 @@ export function guardPlanningText(text) {
   const topic=classifyMessage(text);
   if(['crisis','restricted','integrity','official','missing'].includes(topic)) throw new PlanError(composeResponse(topic,{},text).summary);
   if(/weather|sports|stock|crypto|investment|election|recipe|movie/i.test(text)) throw new PlanError('Let’s keep this plan focused on coursework, study, and academic progress.');
+  if(topic==='scope'&&!/goal|milestone|task|hours?|week|learn|semester|scholarship|orientation|fafsa|transcript|application|academic|college|degree|read|chapter|review|lab|essay|project|research|completed|finished|reopen|less aggressive|easier|gentle|faster|focused|urgent|priority|december|november|october|september|august|july|june|may|april|march|february|january/i.test(text))throw new PlanError('I can help with academic goals, study steps, and schedules. Please describe an academic task or goal.');
 }
 export function readPlan(db,userId,studentId){
   const row=db.prepare('SELECT version,body FROM plans WHERE owner_id=? AND student_id=?').get(userId,studentId);
@@ -101,6 +102,8 @@ export function revisePlan(plan,message,now=Date.now()){
   }
   const add=text.match(/^add\s+(.+)$/);
   if(add){if(next.tasks.length>=32)throw new PlanError('Keep this plan to 32 steps or fewer.');next.tasks.push({id:randomUUID(),title:message.slice(4).trim(),minutes:30,priority:'medium',completed:false,assignmentId:null,deadline:null,scheduled:null,dependsOn:[],reason:'Added from your request. The 30-minute estimate is a starting assumption; edit it as needed.'});return {plan:schedulePlan(next,now),message:'Added your study step with an adjustable 30-minute estimate.'};}
+  const priority=text.match(/^make\s+(.+?)\s+(urgent|high priority|medium priority|low priority)[.!]?$/);
+  if(priority){const matches=next.tasks.filter(t=>t.title.toLowerCase()===priority[1]);if(matches.length!==1)throw new PlanError('Use the exact study-step title when changing priority. No records were changed.');changeTask(next,matches[0].id,{priority:priority[2]==='urgent'?'high':priority[2].split(' ')[0]});return {plan:schedulePlan(next,now),message:'Updated the priority and remaining schedule. Required prerequisites still come first.'};}
   const words={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,ten:10};
   const hours=text.match(/\b(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|ten)\s*hours?(?:\s*(?:per|a|each|\/)?\s*week)?/);
   if(hours){next.preferences.hours=Number(hours[1])||words[hours[1]];changed=true;}
