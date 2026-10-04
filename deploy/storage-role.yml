@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: PathWise second application only - durable fictional demo data and a scoped Amplify compute role.
+Parameters:
+  AmplifyAppId:
+    Type: String
+    AllowedPattern: '[a-z0-9]+'
+Resources:
+  DemoData:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+      Tags:
+        - Key: Application
+          Value: PathWiseAI
+  ComputeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: amplify.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                aws:SourceArn: !Sub 'arn:${AWS::Partition}:amplify:${AWS::Region}:${AWS::AccountId}:apps/${AmplifyAppId}*'
+      Policies:
+        - PolicyName: PathWiseOwnDemoDataOnly
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource: !GetAtt DemoData.Arn
+Outputs:
+  TableName:
+    Value: !Ref DemoData
+  ComputeRoleArn:
+    Value: !GetAtt ComputeRole.Arn
